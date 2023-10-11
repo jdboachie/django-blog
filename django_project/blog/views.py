@@ -1,21 +1,10 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from typing import Any
+from django.db.models.query import QuerySet
+from django.shortcuts import render, get_object_or_404
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.models import User
 from .models import Post
-
-# posts = [
-#     {
-#         'author': 'Jude Boachie',
-#         'title': 'ChristWorld Incorporated: The Vision and Mission',
-#         'content': 'Vision:\nBuilding A Nation Where Christ Is All And In All And To Make Christ The Centre Of The World By Dispensing Christ With Love, The Holy Ghost As Our Means.\nMission:Building Christ Into All Men Through The Revelation [Galatians 1:16], Formation [Galatians 4:19],  Magnification [Philippians 1:20], And Glorification [2 Thessalonians 1:12] Of Christ In All Men, Until All Men, Conform To The Image Of His Son [Romans 8:29], Using Christ As The Building Material.',
-#         'date_posted': 'October 10, 2023'
-#     },
-#     {
-#         'author': 'Freda Yamorti Gbande',
-#         'title': 'Love Economy Church: The Founder',
-#         'content': 'Bishop Isaac Oti Boateng is the president and founder of Love Economy (aka Christworld Inc.), a dynamic, multifaceted global ministry currently numbering over 1000 people in 4 continents. He is an alumni of the Kwame Nkrumah University of Science and Technology (KNUST) and has a Masters in Business Administration and offers management consultancy. His love for entrepreneurship has lead him to start and help numerous businesses and startups achieve maximum efficiency through his business management consultancy. However, his greatest source of joy and pride is seeing God’s people discover the inherent power of God in them.',
-#         'date_posted': 'October 9, 2023'
-#     },
-# ]
 
 
 def home(request):
@@ -25,5 +14,63 @@ def home(request):
     return render(request, 'blog/home.html', context)
 
 
+class PostListView(ListView):
+    model = Post
+    template_name = 'blog/home.html'  # <app>/<model>_<viewtype>.html
+    context_object_name = 'posts'
+    ordering = ['-date_posted']
+    paginate_by = 5
+
+
+class PostDetailView(DetailView):
+    model = Post
+
+
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    fields = ['title', 'content']
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Post
+    fields = ['title', 'content']
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def test_func(self):
+        post = self.get_object()
+        if self.request.user == post.author:
+            return True
+        return False
+
+
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Post
+    success_url = '/'
+
+    def test_func(self):
+        post = self.get_object()
+        if self.request.user == post.author:
+            return True
+        return False
+
+
 def about(request):
-    return render(request, 'blog/about.html', {'title':'About'})
+    return render(request, 'blog/about.html', {'title': 'About'})
+
+
+class UserPostListView(ListView):
+    model = Post
+    template_name = 'blog/user_posts.html'  # <app>/<model>_<viewtype>.html
+    context_object_name = 'posts'
+    paginate_by = 5
+    
+    def get_queryset(self) -> QuerySet[Any]:
+        user = get_object_or_404(User, username=self.kwargs.get('username'))
+        return Post.objects.filter(author=user).order_by('-date_posted')

@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-ap%#8_mf2!dk$h7$b&jn8av7*p&nwmuh4&4mmml^gny6zom!w)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.181.99']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -134,3 +134,12 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 LOGIN_REDIRECT_URL = 'blog-home'
 LOGIN_URL = 'Login'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'live.smtp.mailtrap.io'
+EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
+EMAIL_HOST_USER = 'ff9984c6580398'
+EMAIL_HOST_PASSWORD = '37e97bb230be57'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
